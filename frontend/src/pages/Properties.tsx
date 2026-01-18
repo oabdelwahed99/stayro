@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import PropertyMapSearch from '../components/PropertyMapSearch'
@@ -196,12 +196,27 @@ export default function Properties() {
   const [properties, setProperties] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<PropertyFilters>({})
-  const [searchInput, setSearchInput] = useState(filters.search || '') // Separate state for search input
+  // Separate input states - these persist independently of search results
+  const [searchInput, setSearchInput] = useState('')
+  const [cityInput, setCityInput] = useState('')
+  const [minPriceInput, setMinPriceInput] = useState('')
+  const [maxPriceInput, setMaxPriceInput] = useState('')
+  const [capacityInput, setCapacityInput] = useState('')
+  const [propertyTypeInput, setPropertyTypeInput] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selectedForComparison, setSelectedForComparison] = useState<number[]>([])
   const [showMapSearch, setShowMapSearch] = useState(false)
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const filterDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Refs to track which input is focused
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const cityInputRef = useRef<HTMLInputElement>(null)
+  const minPriceInputRef = useRef<HTMLInputElement>(null)
+  const maxPriceInputRef = useRef<HTMLInputElement>(null)
+  const capacityInputRef = useRef<HTMLInputElement>(null)
+  const focusedInputRef = useRef<'search' | 'city' | 'minPrice' | 'maxPrice' | 'capacity' | null>(null)
 
   // Load comparison selections from localStorage on mount
   useEffect(() => {
@@ -237,6 +252,31 @@ export default function Properties() {
     }
   }, [searchInput])
 
+  // Debounce filter inputs (city, prices, capacity, property_type) to filters
+  useEffect(() => {
+    if (filterDebounceRef.current) {
+      clearTimeout(filterDebounceRef.current)
+    }
+
+    filterDebounceRef.current = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        city: cityInput.trim() || undefined,
+        min_price: minPriceInput.trim() ? Number(minPriceInput) : undefined,
+        max_price: maxPriceInput.trim() ? Number(maxPriceInput) : undefined,
+        capacity: capacityInput.trim() ? Number(capacityInput) : undefined,
+        property_type: propertyTypeInput || undefined,
+      }))
+      setPage(1)
+    }, 300) // 300ms debounce
+
+    return () => {
+      if (filterDebounceRef.current) {
+        clearTimeout(filterDebounceRef.current)
+      }
+    }
+  }, [cityInput, minPriceInput, maxPriceInput, capacityInput, propertyTypeInput])
+
   useEffect(() => {
     loadProperties()
   }, [filters, page])
@@ -256,6 +296,28 @@ export default function Properties() {
       setTotalPages(1)
     } finally {
       setLoading(false)
+      // Restore focus to the previously focused input after state update
+      if (focusedInputRef.current) {
+        setTimeout(() => {
+          switch (focusedInputRef.current) {
+            case 'search':
+              searchInputRef.current?.focus()
+              break
+            case 'city':
+              cityInputRef.current?.focus()
+              break
+            case 'minPrice':
+              minPriceInputRef.current?.focus()
+              break
+            case 'maxPrice':
+              maxPriceInputRef.current?.focus()
+              break
+            case 'capacity':
+              capacityInputRef.current?.focus()
+              break
+          }
+        }, 0)
+      }
     }
   }
 
@@ -358,10 +420,31 @@ export default function Properties() {
               Search
             </label>
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search properties..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={() => focusedInputRef.current = 'search'}
+              onBlur={(e) => {
+                // Check if focus is moving to another filter input
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (!relatedTarget || 
+                    (relatedTarget !== cityInputRef.current &&
+                     relatedTarget !== minPriceInputRef.current &&
+                     relatedTarget !== maxPriceInputRef.current &&
+                     relatedTarget !== capacityInputRef.current)) {
+                  // Only clear if moving outside all filter inputs
+                  setTimeout(() => {
+                    if (document.activeElement !== cityInputRef.current &&
+                        document.activeElement !== minPriceInputRef.current &&
+                        document.activeElement !== maxPriceInputRef.current &&
+                        document.activeElement !== capacityInputRef.current) {
+                      focusedInputRef.current = null
+                    }
+                  }, 0)
+                }
+              }}
               className="input"
             />
           </div>
@@ -370,10 +453,29 @@ export default function Properties() {
               City
             </label>
             <input
+              ref={cityInputRef}
               type="text"
               placeholder="City"
-              value={filters.city || ''}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              onFocus={() => focusedInputRef.current = 'city'}
+              onBlur={(e) => {
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (!relatedTarget || 
+                    (relatedTarget !== searchInputRef.current &&
+                     relatedTarget !== minPriceInputRef.current &&
+                     relatedTarget !== maxPriceInputRef.current &&
+                     relatedTarget !== capacityInputRef.current)) {
+                  setTimeout(() => {
+                    if (document.activeElement !== searchInputRef.current &&
+                        document.activeElement !== minPriceInputRef.current &&
+                        document.activeElement !== maxPriceInputRef.current &&
+                        document.activeElement !== capacityInputRef.current) {
+                      focusedInputRef.current = null
+                    }
+                  }, 0)
+                }
+              }}
               className="input"
             />
           </div>
@@ -382,10 +484,29 @@ export default function Properties() {
               Min Price
             </label>
             <input
+              ref={minPriceInputRef}
               type="number"
               placeholder="Min price"
-              value={filters.min_price || ''}
-              onChange={(e) => handleFilterChange('min_price', e.target.value ? Number(e.target.value) : undefined)}
+              value={minPriceInput}
+              onChange={(e) => setMinPriceInput(e.target.value)}
+              onFocus={() => focusedInputRef.current = 'minPrice'}
+              onBlur={(e) => {
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (!relatedTarget || 
+                    (relatedTarget !== searchInputRef.current &&
+                     relatedTarget !== cityInputRef.current &&
+                     relatedTarget !== maxPriceInputRef.current &&
+                     relatedTarget !== capacityInputRef.current)) {
+                  setTimeout(() => {
+                    if (document.activeElement !== searchInputRef.current &&
+                        document.activeElement !== cityInputRef.current &&
+                        document.activeElement !== maxPriceInputRef.current &&
+                        document.activeElement !== capacityInputRef.current) {
+                      focusedInputRef.current = null
+                    }
+                  }, 0)
+                }
+              }}
               className="input"
             />
           </div>
@@ -394,10 +515,29 @@ export default function Properties() {
               Max Price
             </label>
             <input
+              ref={maxPriceInputRef}
               type="number"
               placeholder="Max price"
-              value={filters.max_price || ''}
-              onChange={(e) => handleFilterChange('max_price', e.target.value ? Number(e.target.value) : undefined)}
+              value={maxPriceInput}
+              onChange={(e) => setMaxPriceInput(e.target.value)}
+              onFocus={() => focusedInputRef.current = 'maxPrice'}
+              onBlur={(e) => {
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (!relatedTarget || 
+                    (relatedTarget !== searchInputRef.current &&
+                     relatedTarget !== cityInputRef.current &&
+                     relatedTarget !== minPriceInputRef.current &&
+                     relatedTarget !== capacityInputRef.current)) {
+                  setTimeout(() => {
+                    if (document.activeElement !== searchInputRef.current &&
+                        document.activeElement !== cityInputRef.current &&
+                        document.activeElement !== minPriceInputRef.current &&
+                        document.activeElement !== capacityInputRef.current) {
+                      focusedInputRef.current = null
+                    }
+                  }, 0)
+                }
+              }}
               className="input"
             />
           </div>
@@ -406,10 +546,29 @@ export default function Properties() {
               Capacity
             </label>
             <input
+              ref={capacityInputRef}
               type="number"
               placeholder="Guests"
-              value={filters.capacity || ''}
-              onChange={(e) => handleFilterChange('capacity', e.target.value ? Number(e.target.value) : undefined)}
+              value={capacityInput}
+              onChange={(e) => setCapacityInput(e.target.value)}
+              onFocus={() => focusedInputRef.current = 'capacity'}
+              onBlur={(e) => {
+                const relatedTarget = e.relatedTarget as HTMLElement
+                if (!relatedTarget || 
+                    (relatedTarget !== searchInputRef.current &&
+                     relatedTarget !== cityInputRef.current &&
+                     relatedTarget !== minPriceInputRef.current &&
+                     relatedTarget !== maxPriceInputRef.current)) {
+                  setTimeout(() => {
+                    if (document.activeElement !== searchInputRef.current &&
+                        document.activeElement !== cityInputRef.current &&
+                        document.activeElement !== minPriceInputRef.current &&
+                        document.activeElement !== maxPriceInputRef.current) {
+                      focusedInputRef.current = null
+                    }
+                  }, 0)
+                }
+              }}
               className="input"
             />
           </div>
@@ -418,8 +577,8 @@ export default function Properties() {
               Property Type
             </label>
             <select
-              value={filters.property_type || ''}
-              onChange={(e) => handleFilterChange('property_type', e.target.value || undefined)}
+              value={propertyTypeInput}
+              onChange={(e) => setPropertyTypeInput(e.target.value)}
               className="input"
             >
               <option value="">All Types</option>

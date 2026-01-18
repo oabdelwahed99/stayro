@@ -31,7 +31,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     """
     queryset = Property.objects.select_related('owner').prefetch_related('images').all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['city', 'country', 'property_type', 'status', 'capacity']
+    filterset_fields = ['country', 'property_type', 'status', 'capacity']  # city handled manually with icontains
     search_fields = ['title', 'description', 'location', 'city', 'country']
     ordering_fields = ['price_per_night', 'created_at', 'capacity']
     ordering = ['-created_at']
@@ -112,6 +112,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 # Don't filter by status - let owners see their own properties
                 # Permission check will ensure they can only access their own
                 pass
+        
+        # Filter by city with case-insensitive partial matching
+        city = self.request.query_params.get('city')
+        if city:
+            queryset = queryset.filter(city__icontains=city)
         
         # Filter by price range
         min_price = self.request.query_params.get('min_price')

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { api } from '../services/api'
 import toast from 'react-hot-toast'
@@ -22,6 +22,27 @@ function MapClickHandler({ onClick }: { onClick: (lat: number, lng: number) => v
       onClick(e.latlng.lat, e.latlng.lng)
     },
   })
+  return null
+}
+
+// Component to dynamically update map center and zoom
+function MapController({ 
+  center, 
+  zoom = 12 
+}: { 
+  center: [number, number]
+  zoom?: number
+}) {
+  const map = useMap()
+  
+  useEffect(() => {
+    // Update map view when center or zoom changes
+    map.setView(center, zoom, {
+      animate: true,
+      duration: 1.0
+    })
+  }, [center[0], center[1], zoom, map])
+  
   return null
 }
 
@@ -108,12 +129,19 @@ export default function PropertyMapSearch({
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat)
         const lon = parseFloat(data[0].lon)
-        setSearchParams({
+        const newParams = {
           ...searchParams,
           latitude: lat,
           longitude: lon,
-        })
+        }
+        setSearchParams(newParams)
         toast.success(`Location found: ${data[0].display_name}`)
+        
+        // Trigger search after geocoding
+        setTimeout(() => {
+          searchProperties(newParams)
+        }, 100)
+        
         return { lat, lon }
       } else {
         toast.error('Location not found')
@@ -130,8 +158,29 @@ export default function PropertyMapSearch({
     if (!locationSearch.trim()) return
     
     const coords = await geocodeLocation(locationSearch)
-    if (coords) {
-      searchProperties()
+    // searchProperties will be called automatically in geocodeLocation
+  }
+
+  const geocodeCity = async (city: string) => {
+    // Helper function to geocode a city without updating searchParams
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'PropertyRental/1.0'
+          }
+        }
+      )
+      const data = await response.json()
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat)
+        const lon = parseFloat(data[0].lon)
+        return { lat, lon }
+      }
+      return null
+    } catch (error) {
+      return null
     }
   }
 
@@ -139,17 +188,34 @@ export default function PropertyMapSearch({
     const paramsToUse = params || searchParams
     setLoading(true)
     setShowAllProperties(false) // Switch to filtered results
+    
     try {
+      // If city is provided but no coordinates, try to geocode the city first
+      let finalParams = paramsToUse
+      if (paramsToUse.city && (!paramsToUse.latitude || !paramsToUse.longitude)) {
+        const cityCoords = await geocodeCity(paramsToUse.city)
+        if (cityCoords) {
+          // Update params with geocoded coordinates
+          finalParams = {
+            ...paramsToUse,
+            latitude: cityCoords.lat,
+            longitude: cityCoords.lon,
+          }
+          // Update searchParams to reflect the geocoded coordinates (for map display)
+          setSearchParams(finalParams)
+        }
+      }
+      
       // If no coordinates provided, still allow search with other filters
-      const searchParamsToUse = paramsToUse.latitude && paramsToUse.longitude 
-        ? paramsToUse 
-        : { ...paramsToUse, latitude: undefined, longitude: undefined, radius_km: undefined }
+      const searchParamsToUse = finalParams.latitude && finalParams.longitude 
+        ? finalParams 
+        : { ...finalParams, latitude: undefined, longitude: undefined, radius_km: undefined }
       
       const result = await api.advancedSearch(searchParamsToUse)
       setProperties(result.results || [])
       
       if (result.results && result.results.length === 0) {
-        if (paramsToUse.latitude && paramsToUse.longitude) {
+        if (finalParams.latitude && finalParams.longitude) {
           toast.info('No properties found in this area. Try expanding the radius or removing location filters.')
         } else {
           toast.info('No properties found with your filters')
@@ -414,6 +480,12 @@ export default function PropertyMapSearch({
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              
+              {/* Map controller to update view when location changes */}
+              <MapController 
+                center={[searchParams.latitude || initialLatitude, searchParams.longitude || initialLongitude]} 
+                zoom={searchParams.latitude && searchParams.longitude ? 12 : 10}
               />
               
               {/* Map click handler */}
