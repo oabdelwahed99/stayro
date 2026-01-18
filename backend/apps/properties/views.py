@@ -375,11 +375,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def advanced_search(self, request):
         """
         Advanced search with map integration and radius filtering
+        Supports all filters: price, property_type, capacity, city, country, amenities, search, min_rating
         """
         import math
         from datetime import date
         from django.db.models import Avg
         
+        # Use get_queryset() which handles price, amenities, city, country, property_type, capacity, search filters
         queryset = self.get_queryset()
         
         # Map-based search parameters
@@ -387,6 +389,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
         longitude = request.query_params.get('longitude')
         radius_km = request.query_params.get('radius_km', 50)  # Default 50km radius
         
+        # Only apply location filtering if coordinates are provided AND user explicitly wants it
+        # If no properties have coordinates, we'll still show all properties matching other filters
         if latitude and longitude:
             try:
                 lat = float(latitude)
@@ -394,7 +398,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 radius = float(radius_km)
                 
                 # Filter properties within radius using simplified approximation
-                # In production, consider using PostGIS for accurate calculations
+                # Only filter by location if properties have coordinates set
+                # This allows the search to work even if properties don't have lat/lng yet
                 queryset = queryset.filter(
                     latitude__isnull=False,
                     longitude__isnull=False,
@@ -406,7 +411,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
             except (ValueError, TypeError):
                 pass  # Invalid coordinates, ignore map filtering
         
-        # Additional filters
+        # Additional filters that are not in get_queryset
         min_rating = request.query_params.get('min_rating')
         if min_rating:
             try:

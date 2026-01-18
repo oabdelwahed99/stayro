@@ -83,14 +83,26 @@ class PropertyListSerializer(serializers.ModelSerializer):
     """
     primary_image = serializers.SerializerMethodField()
     owner_name = serializers.CharField(source='owner.username', read_only=True)
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Property
         fields = (
             'id', 'title', 'location', 'city', 'country', 'property_type',
             'capacity', 'price_per_night', 'currency', 'status', 
-            'primary_image', 'owner_name', 'created_at'
+            'primary_image', 'owner_name', 'average_rating', 'review_count',
+            'latitude', 'longitude', 'created_at'
         )
+    
+    def get_average_rating(self, obj):
+        """Calculate average rating from approved reviews"""
+        avg = obj.reviews.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 2) if avg else None
+    
+    def get_review_count(self, obj):
+        """Get count of approved reviews"""
+        return obj.reviews.filter(is_approved=True).count()
     
     def get_primary_image(self, obj):
         primary = obj.images.filter(is_primary=True).first()

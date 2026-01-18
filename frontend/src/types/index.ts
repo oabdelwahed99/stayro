@@ -71,6 +71,10 @@ export interface PropertyListItem {
   status: string
   primary_image?: string
   owner_name: string
+  average_rating?: number | null
+  review_count?: number
+  latitude?: string | null
+  longitude?: string | null
   created_at: string
 }
 

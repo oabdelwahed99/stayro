@@ -162,6 +162,24 @@ export default function OwnerDashboard() {
                     </div>
                     <h3 className="text-xl font-semibold mb-2">{property.title}</h3>
                     <p className="text-gray-600 mb-2">{property.location}</p>
+                    
+                    {/* Rating Display - Prominent */}
+                    {property.average_rating && (
+                      <div className="flex items-center gap-2 mb-3 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-200">
+                        <div className="flex items-center gap-1">
+                          <svg className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                          </svg>
+                          <span className="font-bold text-lg text-gray-900">{property.average_rating.toFixed(1)}</span>
+                        </div>
+                        {property.review_count && (
+                          <span className="text-gray-600 text-sm">
+                            ({property.review_count} {property.review_count === 1 ? 'review' : 'reviews'})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-primary-600 font-bold">
                         ${property.price_per_night} {property.currency}/night

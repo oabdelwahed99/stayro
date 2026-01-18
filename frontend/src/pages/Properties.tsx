@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import PropertyMapSearch from '../components/PropertyMapSearch'
@@ -160,6 +160,24 @@ function PropertyCard({
         </div>
         <h3 className="text-xl font-semibold mb-2">{property.title}</h3>
         <p className="text-gray-600 mb-2">{property.location}</p>
+        
+        {/* Rating Display - Prominent */}
+        {property.average_rating && (
+          <div className="flex items-center gap-2 mb-3 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-200">
+            <div className="flex items-center gap-1">
+              <svg className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+              </svg>
+              <span className="font-bold text-lg text-gray-900">{property.average_rating.toFixed(1)}</span>
+            </div>
+            {property.review_count && (
+              <span className="text-gray-600 text-sm">
+                ({property.review_count} {property.review_count === 1 ? 'review' : 'reviews'})
+              </span>
+            )}
+          </div>
+        )}
+        
         <div className="flex justify-between items-center">
           <span className="text-primary-600 font-bold">
             ${property.price_per_night} {property.currency}/night
@@ -178,10 +196,12 @@ export default function Properties() {
   const [properties, setProperties] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<PropertyFilters>({})
+  const [searchInput, setSearchInput] = useState(filters.search || '') // Separate state for search input
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selectedForComparison, setSelectedForComparison] = useState<number[]>([])
   const [showMapSearch, setShowMapSearch] = useState(false)
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load comparison selections from localStorage on mount
   useEffect(() => {
@@ -195,6 +215,27 @@ export default function Properties() {
       // Ignore errors
     }
   }, [])
+
+  // Debounce search input to filters
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current)
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        search: searchInput || undefined,
+      }))
+      setPage(1)
+    }, 300) // 300ms debounce
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current)
+      }
+    }
+  }, [searchInput])
 
   useEffect(() => {
     loadProperties()
@@ -223,13 +264,8 @@ export default function Properties() {
     setPage(1)
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
-  }
+  // Only show loading spinner on initial load (when no properties yet)
+  const isInitialLoad = loading && properties.length === 0
 
   const handleToggleComparison = (propertyId: number, e?: React.MouseEvent) => {
     if (e) {
@@ -266,6 +302,14 @@ export default function Properties() {
       return
     }
     navigate(`/compare?ids=${selectedForComparison.join(',')}`)
+  }
+
+  if (isInitialLoad) {
+    return (
+      <div className="flex justify-center items-center min-h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
   }
 
   return (
@@ -316,8 +360,8 @@ export default function Properties() {
             <input
               type="text"
               placeholder="Search properties..."
-              value={filters.search || ''}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="input"
             />
           </div>
@@ -390,7 +434,12 @@ export default function Properties() {
       </div>
 
       {/* Properties Grid */}
-      {properties.length === 0 ? (
+      {loading && properties.length > 0 && (
+        <div className="flex justify-center items-center py-4 mb-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        </div>
+      )}
+      {!loading && properties.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 text-lg">No properties found</p>
         </div>
