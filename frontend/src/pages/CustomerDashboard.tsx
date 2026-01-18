@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import ModifyBooking from '../components/ModifyBooking'
 import BookingCalendar from '../components/BookingCalendar'
 import ExportButtons from '../components/ExportButtons'
+import PropertyRecommendations from '../components/PropertyRecommendations'
 import type { BookingListItem } from '../types'
 
 type FilterStatus = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED'
@@ -216,6 +217,14 @@ export default function CustomerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Personalized Recommendations */}
+      <div className="mb-8">
+        <PropertyRecommendations
+          title="You Might Also Like"
+          limit={6}
+        />
+      </div>
 
       {/* Filters and Sort */}
       {bookings.length > 0 && (

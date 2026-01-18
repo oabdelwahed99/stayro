@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import PropertyReviews from '../components/PropertyReviews'
 import PropertyAvailability from '../components/PropertyAvailability'
+import PropertyRecommendations from '../components/PropertyRecommendations'
 import WishlistButton from '../components/WishlistButton'
 import type { Property, CreateBookingData } from '../types'
 
@@ -352,6 +353,15 @@ export default function PropertyDetail() {
               </div>
             </div>
           )}
+
+          {/* Recommendations */}
+          <div className="mt-6">
+            <PropertyRecommendations 
+              propertyId={property.id} 
+              title="You Might Also Like"
+              limit={6}
+            />
+          </div>
         </div>
 
         {/* Booking Sidebar */}

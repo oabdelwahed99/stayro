@@ -567,3 +567,81 @@ class PropertyViewSet(viewsets.ModelViewSet):
         
         serializer = PropertyWishlistSerializer(wishlist_items, many=True, context={'request': request})
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
+    def recommendations(self, request, pk=None):
+        """
+        Get AI-powered property recommendations
+        - If user is authenticated: Personalized recommendations based on booking history, wishlist, and reviews
+        - If user is not authenticated: Similar properties based on the current property
+        """
+        try:
+            property_obj = self.get_object()
+        except Property.DoesNotExist:
+            return Response({'error': 'Property not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        from core.ai_service import recommendation_service
+        
+        limit = int(request.query_params.get('limit', 6))
+        limit = min(limit, 20)  # Cap at 20
+        
+        if request.user.is_authenticated and request.user.is_customer:
+            # Get personalized recommendations
+            recommended_properties = recommendation_service.get_personalized_recommendations(
+                user=request.user,
+                exclude_property_id=property_obj.id,
+                limit=limit
+            )
+        else:
+            # Get similar properties
+            recommended_properties = recommendation_service.get_similar_properties(
+                property=property_obj,
+                limit=limit
+            )
+        
+        # Serialize results
+        serializer = PropertyListSerializer(
+            recommended_properties, 
+            many=True, 
+            context={'request': request}
+        )
+        
+        return Response({
+            'count': len(recommended_properties),
+            'results': serializer.data,
+            'recommendation_type': 'personalized' if request.user.is_authenticated else 'similar'
+        })
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def personalized_recommendations(self, request):
+        """
+        Get personalized recommendations for the authenticated user
+        Based on booking history, wishlist, and review preferences
+        """
+        if not request.user.is_customer:
+            return Response(
+                {'error': 'This endpoint is only available for customers'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from core.ai_service import recommendation_service
+        
+        limit = int(request.query_params.get('limit', 10))
+        limit = min(limit, 20)  # Cap at 20
+        
+        recommended_properties = recommendation_service.get_personalized_recommendations(
+            user=request.user,
+            limit=limit
+        )
+        
+        # Serialize results
+        serializer = PropertyListSerializer(
+            recommended_properties, 
+            many=True, 
+            context={'request': request}
+        )
+        
+        return Response({
+            'count': len(recommended_properties),
+            'results': serializer.data
+        })

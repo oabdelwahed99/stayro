@@ -320,6 +320,35 @@ class ApiService {
     return response.data
   }
 
+  // Recommendations endpoints
+  async getPropertyRecommendations(propertyId: number, limit = 6): Promise<{
+    count: number
+    results: PropertyListItem[]
+    recommendation_type: 'personalized' | 'similar'
+  }> {
+    const response = await this.api.get<{
+      count: number
+      results: PropertyListItem[]
+      recommendation_type: 'personalized' | 'similar'
+    }>(`/properties/${propertyId}/recommendations/`, {
+      params: { limit },
+    })
+    return response.data
+  }
+
+  async getPersonalizedRecommendations(limit = 10): Promise<{
+    count: number
+    results: PropertyListItem[]
+  }> {
+    const response = await this.api.get<{
+      count: number
+      results: PropertyListItem[]
+    }>('/properties/personalized_recommendations/', {
+      params: { limit },
+    })
+    return response.data
+  }
+
   // Advanced search
   async advancedSearch(params: AdvancedSearchParams, page = 1): Promise<{
     count: number

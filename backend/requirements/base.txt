@@ -9,3 +9,4 @@ boto3==1.29.7
 python-decouple==3.8
 django-filter==23.5
 drf-spectacular==0.26.5
+openai==1.12.0
