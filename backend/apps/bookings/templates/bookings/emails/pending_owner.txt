@@ -1,0 +1,21 @@
+New Booking Request
+
+Hello {{ property.owner.username }},
+
+You have received a new booking request for your property: {{ property.title }}
+
+Booking Details:
+- Customer: {{ customer.username }}
+- Check-in: {{ booking.check_in }}
+- Check-out: {{ booking.check_out }}
+- Number of Nights: {{ booking.number_of_nights }}
+- Guests: {{ booking.guests }}
+- Total Price: {{ booking.currency }} {{ booking.total_price }}
+{% if booking.special_requests %}
+- Special Requests: {{ booking.special_requests }}
+{% endif %}
+
+Please log in to approve or reject this booking request.
+
+Best regards,
+Property Rental Platform

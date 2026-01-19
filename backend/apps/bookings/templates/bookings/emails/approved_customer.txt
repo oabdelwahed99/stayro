@@ -1,0 +1,19 @@
+Booking Approved! 🎉
+
+Hello {{ booking.customer.username }},
+
+Great news! Your booking request has been approved by the property owner.
+
+Booking Details:
+- Property: {{ property.title }}
+- Location: {{ property.location }}
+- Check-in: {{ booking.check_in }}
+- Check-out: {{ booking.check_out }}
+- Number of Nights: {{ booking.number_of_nights }}
+- Guests: {{ booking.guests }}
+- Total Price: {{ booking.currency }} {{ booking.total_price }}
+
+We hope you have a wonderful stay!
+
+Best regards,
+Property Rental Platform

@@ -1,0 +1,14 @@
+Booking Request Update
+
+Hello {{ booking.customer.username }},
+
+Unfortunately, your booking request for {{ property.title }} has been declined by the property owner.
+
+{% if booking.rejection_reason %}
+Reason: {{ booking.rejection_reason }}
+{% endif %}
+
+We're sorry this didn't work out. Feel free to browse other available properties!
+
+Best regards,
+Property Rental Platform

@@ -144,6 +144,8 @@ class AdminAnalyticsViewSet(viewsets.ViewSet):
     Admin analytics and statistics
     """
     permission_classes = [IsAuthenticated, IsAdmin]
+    # Empty queryset for router compatibility - ViewSets need this for URL generation
+    queryset = []
     
     @action(detail=False, methods=['get'])
     def dashboard(self, request):

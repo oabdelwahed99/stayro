@@ -12,6 +12,7 @@ import csv
 import json
 from .models import Booking, AvailabilityChecker
 from .serializers import BookingSerializer, BookingListSerializer
+from .utils import send_booking_status_email
 from core.permissions import IsBookingCustomer
 from core.exceptions import PropertyNotAvailableException, UnauthorizedActionException
 
@@ -85,8 +86,12 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        old_status = booking.status
         booking.status = 'CANCELLED'
         booking.save()
+        
+        # Send email notification
+        send_booking_status_email(booking, old_status)
         
         serializer = self.get_serializer(booking)
         return Response(serializer.data)
@@ -115,6 +120,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        old_status = booking.status
+        
         if action_type == 'approve':
             # Check availability again before approving
             is_available, conflicting_bookings = AvailabilityChecker.check_availability(
@@ -133,6 +140,9 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking.rejection_reason = request.data.get('rejection_reason', 'No reason provided')
         
         booking.save()
+        
+        # Send email notification
+        send_booking_status_email(booking, old_status)
         
         serializer = self.get_serializer(booking)
         return Response(serializer.data)

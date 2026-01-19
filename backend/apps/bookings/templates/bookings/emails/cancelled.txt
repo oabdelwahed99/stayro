@@ -1,0 +1,11 @@
+Booking Cancelled
+
+The following booking has been cancelled:
+
+Property: {{ property.title }}
+Check-in: {{ booking.check_in }}
+Check-out: {{ booking.check_out }}
+Total Price: {{ booking.currency }} {{ booking.total_price }}
+
+Best regards,
+Property Rental Platform

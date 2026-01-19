@@ -4,6 +4,7 @@ from .models import Booking
 from apps.properties.serializers import PropertyListSerializer
 from apps.accounts.serializers import UserSerializer
 from .models import AvailabilityChecker
+from .utils import send_booking_status_email
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -95,7 +96,12 @@ class BookingSerializer(serializers.ModelSerializer):
         nights = (check_out - check_in).days
         validated_data['total_price'] = property.price_per_night * nights
         
-        return super().create(validated_data)
+        booking = super().create(validated_data)
+        
+        # Send email notification for new booking (status is PENDING by default)
+        send_booking_status_email(booking)
+        
+        return booking
 
 
 class BookingListSerializer(serializers.ModelSerializer):

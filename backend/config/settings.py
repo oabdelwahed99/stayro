@@ -196,13 +196,33 @@ if USE_S3:
 else:
     MEDIA_URL = '/media/'
 
-# Email Settings
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+# Email Settings - Brevo (formerly Sendinblue)
+# Use Brevo SMTP by default if credentials are provided, otherwise use console for development
+BREVO_SMTP_USER = config('BREVO_SMTP_USER', default='')
+BREVO_SMTP_PASSWORD = config('BREVO_SMTP_PASSWORD', default='')
+
+# SSL certificate verification (set to False only for development/testing)
+# WARNING: Disabling SSL verification is insecure. Use only in development!
+EMAIL_SSL_VERIFY = config('EMAIL_SSL_VERIFY', default='True', cast=bool)
+
+if BREVO_SMTP_USER and BREVO_SMTP_PASSWORD:
+    # Use custom backend that handles SSL verification
+    EMAIL_BACKEND = 'core.email_backend.BrevoEmailBackend'
+    EMAIL_HOST = 'smtp-relay.brevo.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = BREVO_SMTP_USER
+    EMAIL_HOST_PASSWORD = BREVO_SMTP_PASSWORD
+else:
+    EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp-relay.brevo.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+# Default from email address
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.com')
 
 # API Documentation
 SPECTACULAR_SETTINGS = {

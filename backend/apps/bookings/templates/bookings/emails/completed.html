@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Booking Completed</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #27ae60;">Booking Completed</h2>
+        <p>The following booking has been completed:</p>
+        
+        <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Property:</strong> {{ property.title }}</p>
+            <p><strong>Location:</strong> {{ property.location }}</p>
+            <p><strong>Check-in:</strong> {{ booking.check_in }}</p>
+            <p><strong>Check-out:</strong> {{ booking.check_out }}</p>
+            <p><strong>Guests:</strong> {{ booking.guests }}</p>
+            <p><strong>Total Price:</strong> {{ booking.currency }} {{ booking.total_price }}</p>
+        </div>
+        
+        <p>Thank you for using our platform!</p>
+        <p>Best regards,<br>Property Rental Platform</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+Booking Completed
+
+The following booking has been completed:
+
+Property: {{ property.title }}
+Location: {{ property.location }}
+Check-in: {{ booking.check_in }}
+Check-out: {{ booking.check_out }}
+Guests: {{ booking.guests }}
+Total Price: {{ booking.currency }} {{ booking.total_price }}
+
+Thank you for using our platform!
+
+Best regards,
+Property Rental Platform
