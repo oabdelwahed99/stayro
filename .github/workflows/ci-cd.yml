@@ -134,7 +134,7 @@ jobs:
           AWS_S3_VERIFY: 'False'
           PYTHONUNBUFFERED: 1
         run: |
-          python manage.py test --verbosity=2
+          python manage.py test apps --verbosity=2
 
   build-and-push:
     name: Build and Push Docker Image
