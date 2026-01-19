@@ -32,15 +32,6 @@ jobs:
         ports:
           - 5432:5432
 
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        ports:
-          - 9000:9000  # MinIO API port
-          - 9001:9001  # MinIO Console port
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,6 +40,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Start MinIO
+        run: |
+          docker run -d \
+            --name minio \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data --console-address ":9001"
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
