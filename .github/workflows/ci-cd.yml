@@ -40,7 +40,6 @@ jobs:
         ports:
           - 9000:9000  # MinIO API port
           - 9001:9001  # MinIO Console port
-        command: server /data --console-address ":9001"
 
     steps:
       - name: Checkout code
