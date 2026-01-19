@@ -56,7 +56,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """
-        Instantiates and returns the list of permissions that this view requires.
+        Instantiates  and returns the list of permissions that this view requires.
         """
         # Custom actions have their own permission_classes in @action decorator
         # The decorator permissions override this method, but we handle here for consistency
