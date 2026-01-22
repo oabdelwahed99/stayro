@@ -63,7 +63,8 @@ class UserRegistrationTests(TestCase):
         response = self.client.post(self.register_url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertIn('field_errors', response.data)
+        self.assertIn('password', response.data['field_errors'])
     
     def test_register_weak_password(self):
         """Test registration fails with weak password"""
