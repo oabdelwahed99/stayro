@@ -340,7 +340,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def wishlist(self, request, pk=None):
         """
         Add property to wishlist (POST) or remove from wishlist (DELETE)
+        Only available for customers and admins, not for owners
         """
+        # Prevent owners from using wishlist functionality
+        if request.user.is_owner:
+            return Response(
+                {'error': 'Property owners cannot add properties to wishlist'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         if request.method == 'POST':
             # For POST: only allow approved properties to be added to wishlist
             try:
@@ -464,17 +472,21 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 status='APPROVED'
             ).select_related('owner').prefetch_related('images', 'reviews')
             
-            if properties.count() != len(ids):
-                return Response(
-                    {'error': 'One or more properties not found or not approved'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
+            found_ids = set(properties.values_list('id', flat=True))
+            missing_ids = [id for id in ids if id not in found_ids]
             
             serializer = PropertySerializer(properties, many=True, context={'request': request})
-            return Response({
+            response_data = {
                 'properties': serializer.data,
                 'count': len(serializer.data)
-            })
+            }
+            
+            # Include information about missing properties if any
+            if missing_ids:
+                response_data['missing_ids'] = missing_ids
+                response_data['warning'] = f'Some properties ({len(missing_ids)}) were not found or not approved'
+            
+            return Response(response_data)
         except ValueError:
             return Response(
                 {'error': 'Invalid property IDs format'}, 
@@ -560,7 +572,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def wishlist_items(self, request):
         """
         Get all wishlist items for the authenticated user
+        Only available for customers and admins, not for owners
         """
+        # Prevent owners from accessing wishlist items
+        if request.user.is_owner:
+            return Response(
+                {'error': 'Property owners cannot access wishlist'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         wishlist_items = PropertyWishlist.objects.filter(
             user=request.user
         ).select_related('property', 'property__owner').prefetch_related('property__images')

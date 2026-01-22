@@ -71,12 +71,45 @@ export default function EditProperty() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newImagePreviews = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      isPrimary: existingImages.length === 0 && newImages.length === 0, // First image is primary
-    }))
-    setNewImages((prev) => [...prev, ...newImagePreviews])
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    
+    const validFiles: File[] = []
+    
+    files.forEach((file) => {
+      // Check file size
+      if (file.size > maxSize) {
+        toast.error(
+          `File "${file.name}" is too large. Maximum size is 5MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+        )
+        return
+      }
+      
+      // Check file type
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        toast.error(
+          `File "${file.name}" is not a valid image. Allowed types: ${allowedExtensions.join(', ')}`
+        )
+        return
+      }
+      
+      validFiles.push(file)
+    })
+    
+    if (validFiles.length > 0) {
+      const newImagePreviews = validFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        isPrimary: existingImages.length === 0 && newImages.length === 0, // First image is primary
+      }))
+      setNewImages((prev) => [...prev, ...newImagePreviews])
+      
+      if (validFiles.length < files.length) {
+        toast.success(`Added ${validFiles.length} image(s). Some files were skipped due to validation errors.`)
+      }
+    }
   }
 
   const removeNewImage = (index: number) => {
@@ -432,15 +465,25 @@ export default function EditProperty() {
             {/* Add New Images */}
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-3">Add New Images</h3>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                <h4 className="text-xs font-semibold text-blue-900 mb-1">📸 Upload Guidelines</h4>
+                <ul className="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
+                  <li><strong>Max Size:</strong> 5MB per image</li>
+                  <li><strong>Formats:</strong> JPG, JPEG, PNG, GIF, WebP</li>
+                  <li><strong>Multiple:</strong> Select multiple images at once</li>
+                </ul>
+              </div>
+              
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 multiple
                 onChange={handleImageSelect}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               />
               <p className="text-xs text-gray-500 mt-1">
-                You can select multiple images at once. Supported formats: JPG, PNG, WebP
+                Files larger than 5MB or unsupported formats will be automatically rejected.
               </p>
             </div>
 

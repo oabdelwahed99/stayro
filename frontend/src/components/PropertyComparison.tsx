@@ -24,8 +24,21 @@ export default function PropertyComparison({ initialPropertyIds = [] }: Property
 
   const loadAllProperties = async () => {
     try {
-      const result = await api.getProperties({}, 1)
-      setAllProperties(result.results)
+      // Load all pages to get all properties for comparison
+      let allResults: PropertyListItem[] = []
+      let page = 1
+      let hasMore = true
+      
+      while (hasMore) {
+        const result = await api.getProperties({}, page)
+        allResults = [...allResults, ...result.results]
+        hasMore = result.next !== null
+        page++
+        // Safety limit to prevent infinite loops
+        if (page > 100) break
+      }
+      
+      setAllProperties(allResults)
     } catch (error) {
       toast.error('Failed to load properties')
     }
@@ -41,9 +54,30 @@ export default function PropertyComparison({ initialPropertyIds = [] }: Property
     try {
       const result = await api.compareProperties(ids)
       setProperties(result.properties)
-      setSelectedIds(ids)
-    } catch (error) {
-      toast.error('Failed to load property comparison')
+      
+      // Only keep IDs that were successfully loaded
+      const loadedIds = result.properties.map((p: Property) => p.id)
+      setSelectedIds(loadedIds)
+      
+      // Show warning if some properties are missing
+      if (result.missing_ids && result.missing_ids.length > 0) {
+        toast.error(
+          `${result.missing_ids.length} propert${result.missing_ids.length === 1 ? 'y' : 'ies'} not found or not approved`,
+          { duration: 5000 }
+        )
+      }
+      
+      // If no properties were loaded, show error
+      if (result.properties.length === 0) {
+        toast.error('No properties could be loaded for comparison')
+        setProperties([])
+        setSelectedIds([])
+      }
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to load property comparison'
+      toast.error(errorMessage)
+      setProperties([])
+      setSelectedIds([])
     } finally {
       setLoading(false)
     }

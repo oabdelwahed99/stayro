@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Avg, Count
+import os
 from .models import Property, PropertyImage, PropertyReview, PropertyWishlist
 from apps.accounts.serializers import UserSerializer
 
@@ -11,6 +12,32 @@ class PropertyImageSerializer(serializers.ModelSerializer):
         model = PropertyImage
         fields = ('id', 'image', 'image_url', 'is_primary', 'caption', 'created_at')
         read_only_fields = ('id', 'image_url', 'created_at')
+    
+    def validate_image(self, value):
+        """
+        Validate image file type and size.
+        """
+        # Check file size (max 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB in bytes
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                f"Image size cannot exceed 5MB. Current size: {value.size / (1024 * 1024):.2f}MB"
+            )
+        
+        # Check file type
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in valid_extensions:
+            raise serializers.ValidationError(
+                f"Invalid file type. Allowed types: {', '.join(valid_extensions)}"
+            )
+        
+        # Additional validation: check if file is actually an image
+        # This is a basic check - Django's ImageField will do more thorough validation
+        if not value.content_type.startswith('image/'):
+            raise serializers.ValidationError("File must be an image.")
+        
+        return value
     
     def get_image_url(self, obj):
         request = self.context.get('request')

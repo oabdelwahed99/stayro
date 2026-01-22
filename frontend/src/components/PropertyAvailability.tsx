@@ -60,7 +60,7 @@ export default function PropertyAvailabilityComponent({
   const handleDateClick = (date: Date) => {
     if (isDateBooked(date)) {
       const booking = getBookingForDate(date)
-      toast.info(`This date is booked (Status: ${booking?.status})`)
+      toast(`This date is booked (Status: ${booking?.status})`)
       return
     }
 

@@ -216,9 +216,9 @@ export default function PropertyMapSearch({
       
       if (result.results && result.results.length === 0) {
         if (finalParams.latitude && finalParams.longitude) {
-          toast.info('No properties found in this area. Try expanding the radius or removing location filters.')
+          toast('No properties found in this area. Try expanding the radius or removing location filters.')
         } else {
-          toast.info('No properties found with your filters')
+          toast('No properties found with your filters')
         }
       }
     } catch (error: any) {

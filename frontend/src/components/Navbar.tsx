@@ -70,12 +70,20 @@ export default function Navbar() {
                   </>
                 )}
                 {user.role === 'ADMIN' && (
-                  <Link
-                    to="/admin/dashboard"
-                    className="text-gray-700 hover:text-primary-600"
-                  >
-                    Admin Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin/dashboard"
+                      className="text-gray-700 hover:text-primary-600"
+                    >
+                      Admin Dashboard
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      className="text-gray-700 hover:text-primary-600"
+                    >
+                      Wishlist
+                    </Link>
+                  </>
                 )}
                 <div className="flex items-center space-x-2">
                   <span className="text-gray-700">Hello, {user.username}</span>

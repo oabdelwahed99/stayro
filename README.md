@@ -23,7 +23,94 @@ stayro_task/
 
 ## Quick Start
 
-### Backend Setup
+### Prerequisites
+
+- Docker and Docker Compose installed on your system
+  - For Docker Desktop: [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
+  - For Linux: Install Docker and Docker Compose separately
+- Node.js and npm (for frontend)
+
+### Backend Setup (Docker - Recommended)
+
+The Docker setup includes:
+- **PostgreSQL** database (port 5434)
+- **MinIO** object storage for S3-compatible file storage (ports 9002, 9003)
+- **Django** web application (port 8000)
+
+```bash
+cd backend
+
+# Set up environment variables (if .env doesn't exist)
+cp .env.example .env
+# Edit .env with your configuration if needed
+# Note: Docker Compose will override some settings for containerized services
+
+# Build and start all services
+docker-compose up --build
+
+# Or run in detached mode (background)
+docker-compose up -d --build
+```
+
+The services will be available at:
+- **Backend API**: `http://localhost:8000`
+- **MinIO Console**: `http://localhost:9003` (username: `minioadmin`, password: `minioadmin`)
+- **PostgreSQL**: `localhost:5434`
+
+#### Initial Setup in Docker
+
+Once the containers are running, you need to set up the database:
+
+```bash
+# Run migrations
+docker-compose exec web python manage.py migrate
+
+# Create superuser
+docker-compose exec web python manage.py createsuperuser
+
+# Load seed data (optional)
+docker-compose exec web python manage.py shell < scripts/seed_data.py
+```
+
+#### Managing Docker Services
+
+```bash
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (⚠️ This will delete database data)
+docker-compose down -v
+
+# View logs
+docker-compose logs -f
+
+# View logs for a specific service
+docker-compose logs -f web
+
+# Execute commands in the web container
+docker-compose exec web python manage.py <command>
+
+# Rebuild containers after code changes
+docker-compose up --build
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Frontend will be available at `http://localhost:3000`
+
+### Alternative: Manual Backend Setup
+
+If you prefer to run the backend without Docker:
 
 ```bash
 cd backend
@@ -54,19 +141,7 @@ python manage.py runserver
 
 Backend will be available at `http://localhost:8000`
 
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-Frontend will be available at `http://localhost:3000`
+**Note**: With manual setup, you'll need to set up PostgreSQL and MinIO separately, or configure your `.env` to use external services.
 
 ## Features
 

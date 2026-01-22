@@ -10,14 +10,10 @@ import { format } from 'date-fns'
 // Property Card Component with Image Slider
 function PropertyCard({ 
   property, 
-  imageUrl, 
-  isSelected, 
-  onToggleComparison 
+  imageUrl
 }: { 
   property: PropertyListItem
   imageUrl: string | null
-  isSelected: boolean
-  onToggleComparison: (id: number, e?: React.MouseEvent) => void
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [images, setImages] = useState<string[]>([])
@@ -71,27 +67,6 @@ function PropertyCard({
       {/* Wishlist Button */}
       <div className="absolute top-2 right-2 z-10">
         <WishlistButton propertyId={property.id} />
-      </div>
-
-      {/* Comparison Checkbox */}
-      <div 
-        className="absolute top-2 left-2 z-10 bg-white rounded-full p-1 shadow-md"
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onToggleComparison(property.id)}
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggleComparison(property.id, e)
-          }}
-          className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500 cursor-pointer"
-          title={isSelected ? 'Remove from comparison' : 'Add to comparison'}
-        />
       </div>
 
       <Link
@@ -205,7 +180,6 @@ export default function Properties() {
   const [propertyTypeInput, setPropertyTypeInput] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [selectedForComparison, setSelectedForComparison] = useState<number[]>([])
   const [showMapSearch, setShowMapSearch] = useState(false)
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
   const filterDebounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -217,19 +191,6 @@ export default function Properties() {
   const maxPriceInputRef = useRef<HTMLInputElement>(null)
   const capacityInputRef = useRef<HTMLInputElement>(null)
   const focusedInputRef = useRef<'search' | 'city' | 'minPrice' | 'maxPrice' | 'capacity' | null>(null)
-
-  // Load comparison selections from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('comparison_selections')
-      if (stored) {
-        const ids = JSON.parse(stored)
-        setSelectedForComparison(ids)
-      }
-    } catch (error) {
-      // Ignore errors
-    }
-  }, [])
 
   // Debounce search input to filters
   useEffect(() => {
@@ -329,43 +290,6 @@ export default function Properties() {
   // Only show loading spinner on initial load (when no properties yet)
   const isInitialLoad = loading && properties.length === 0
 
-  const handleToggleComparison = (propertyId: number, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    
-    setSelectedForComparison((prev) => {
-      let newSelection: number[]
-      if (prev.includes(propertyId)) {
-        newSelection = prev.filter((id) => id !== propertyId)
-      } else {
-        if (prev.length >= 5) {
-          toast.error('Maximum 5 properties can be compared')
-          return prev
-        }
-        newSelection = [...prev, propertyId]
-      }
-      
-      // Save to localStorage
-      if (newSelection.length > 0) {
-        localStorage.setItem('comparison_selections', JSON.stringify(newSelection))
-      } else {
-        localStorage.removeItem('comparison_selections')
-      }
-      
-      return newSelection
-    })
-  }
-
-  const handleCompare = () => {
-    if (selectedForComparison.length < 2) {
-      toast.error('Please select at least 2 properties to compare')
-      return
-    }
-    navigate(`/compare?ids=${selectedForComparison.join(',')}`)
-  }
-
   if (isInitialLoad) {
     return (
       <div className="flex justify-center items-center min-h-64">
@@ -379,17 +303,6 @@ export default function Properties() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Browse Properties</h1>
         <div className="flex gap-3">
-          {selectedForComparison.length > 0 && (
-            <button
-              onClick={handleCompare}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
-              Compare ({selectedForComparison.length})
-            </button>
-          )}
           <button
             onClick={() => setShowMapSearch(!showMapSearch)}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
@@ -621,8 +534,6 @@ export default function Properties() {
                   key={property.id}
                   property={property}
                   imageUrl={imageUrl}
-                  isSelected={selectedForComparison.includes(property.id)}
-                  onToggleComparison={handleToggleComparison}
                 />
               )
             })}

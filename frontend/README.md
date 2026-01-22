@@ -153,9 +153,50 @@ The frontend uses a proxy configuration in `vite.config.ts` to forward `/api` re
 
 ### Owner Features
 - Create and edit properties
-- Upload property images
+- Upload property images (with validation)
 - View booking requests
 - Approve/reject bookings
+
+#### File Upload Validation
+
+When uploading property images, the backend enforces the following validation rules:
+
+**File Size Limit:**
+- Maximum file size: **5MB**
+- If you upload a file larger than 5MB, you'll see an error message like:
+  ```
+  Image size cannot exceed 5MB. Current size: X.XXMB
+  ```
+
+**Allowed File Types:**
+- Only image files are accepted
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
+- If you upload a non-image file, you'll see an error message like:
+  ```
+  Invalid file type. Allowed types: .jpg, .jpeg, .png, .gif, .webp
+  ```
+  or
+  ```
+  File must be an image.
+  ```
+
+**Testing File Upload Validation:**
+
+To test the file upload validation:
+
+1. **Test file size validation:**
+   - Try uploading an image file larger than 5MB
+   - Expected result: Error toast showing "Image size cannot exceed 5MB"
+
+2. **Test file type validation:**
+   - Try uploading a non-image file (e.g., `.pdf`, `.txt`, `.doc`)
+   - Expected result: Error toast showing "Invalid file type" or "File must be an image"
+
+3. **Test valid image upload:**
+   - Upload a valid image file (`.jpg`, `.png`, etc.) under 5MB
+   - Expected result: Image uploads successfully and appears in the property images list
+
+**Note:** Error messages are displayed via toast notifications. The API service automatically shows error toasts for failed uploads.
 
 ### Customer Features
 - Browse and search properties
@@ -172,7 +213,6 @@ The frontend uses a proxy configuration in `vite.config.ts` to forward `/api` re
 
 ## Known Limitations
 
-- Image upload UI not fully implemented (backend ready)
 - No real-time updates (would require WebSockets)
 - No payment integration UI
 - No email notifications UI

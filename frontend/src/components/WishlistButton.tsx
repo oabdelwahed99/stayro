@@ -14,14 +14,6 @@ export default function WishlistButton({ propertyId, className = '' }: WishlistB
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
 
-  useEffect(() => {
-    if (user) {
-      checkWishlistStatus()
-    } else {
-      setChecking(false)
-    }
-  }, [user, propertyId])
-
   const checkWishlistStatus = async () => {
     if (!user) return
 
@@ -34,6 +26,19 @@ export default function WishlistButton({ propertyId, className = '' }: WishlistB
     } finally {
       setChecking(false)
     }
+  }
+
+  useEffect(() => {
+    if (user && user.role !== 'OWNER') {
+      checkWishlistStatus()
+    } else {
+      setChecking(false)
+    }
+  }, [user, propertyId])
+
+  // Hide wishlist button for owners - only show for customers and admins
+  if (!user || user.role === 'OWNER' || checking) {
+    return null
   }
 
   const handleToggle = async (e: React.MouseEvent) => {
@@ -61,10 +66,6 @@ export default function WishlistButton({ propertyId, className = '' }: WishlistB
     } finally {
       setLoading(false)
     }
-  }
-
-  if (!user || checking) {
-    return null
   }
 
   return (

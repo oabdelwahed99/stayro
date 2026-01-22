@@ -26,9 +26,14 @@ export default function PropertyComparisonPage() {
   
   const [allProperties, setAllProperties] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [showComparison, setShowComparison] = useState(false)
 
   useEffect(() => {
     loadProperties()
+    // If we have IDs from URL, show comparison view immediately
+    if (idsFromUrl.length > 0) {
+      setShowComparison(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -42,8 +47,19 @@ export default function PropertyComparisonPage() {
 
   const loadProperties = async () => {
     try {
-      const result = await api.getProperties({}, 1)
-      setAllProperties(result.results)
+      // Load all pages to get all properties for comparison
+      let allResults: PropertyListItem[] = []
+      let page = 1
+      let hasMore = true
+      
+      while (hasMore) {
+        const result = await api.getProperties({}, page)
+        allResults = [...allResults, ...result.results]
+        hasMore = result.next !== null
+        page++
+      }
+      
+      setAllProperties(allResults)
     } catch (error) {
       toast.error('Failed to load properties')
     } finally {
@@ -91,8 +107,8 @@ export default function PropertyComparisonPage() {
   }
 
   // If IDs are in URL, show comparison view
-  if (idsFromUrl.length > 0 && idsFromUrl.length === selectedIds.length) {
-    return <PropertyComparison initialPropertyIds={selectedIds} />
+  if (showComparison && idsFromUrl.length > 0) {
+    return <PropertyComparison initialPropertyIds={idsFromUrl} />
   }
 
   // Otherwise show property selection interface

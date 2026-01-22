@@ -242,6 +242,8 @@ export interface CreateReviewData {
 export interface PropertyComparison {
   properties: Property[]
   count: number
+  missing_ids?: number[]
+  warning?: string
 }
 
 export interface AdvancedSearchParams {

@@ -49,12 +49,45 @@ export default function CreateProperty() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newImages = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      isPrimary: images.length === 0, // First image is primary by default
-    }))
-    setImages((prev) => [...prev, ...newImages])
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+    
+    const validFiles: File[] = []
+    
+    files.forEach((file) => {
+      // Check file size
+      if (file.size > maxSize) {
+        toast.error(
+          `File "${file.name}" is too large. Maximum size is 5MB. Current size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`
+        )
+        return
+      }
+      
+      // Check file type
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        toast.error(
+          `File "${file.name}" is not a valid image. Allowed types: ${allowedExtensions.join(', ')}`
+        )
+        return
+      }
+      
+      validFiles.push(file)
+    })
+    
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        isPrimary: images.length === 0, // First image is primary by default
+      }))
+      setImages((prev) => [...prev, ...newImages])
+      
+      if (validFiles.length < files.length) {
+        toast.success(`Added ${validFiles.length} image(s). Some files were skipped due to validation errors.`)
+      }
+    }
   }
 
   const removeImage = (index: number) => {
@@ -327,9 +360,18 @@ export default function CreateProperty() {
         {/* Images */}
         <div className="card">
           <h2 className="text-xl font-semibold mb-4">Property Images</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Add photos of your property. The first image will be set as the primary image.
-          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h4 className="text-sm font-semibold text-blue-900 mb-2">📸 Image Upload Guidelines</h4>
+            <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+              <li><strong>File Size:</strong> Maximum 5MB per image</li>
+              <li><strong>Supported Formats:</strong> JPG, JPEG, PNG, GIF, WebP</li>
+              <li><strong>Multiple Images:</strong> You can select multiple images at once</li>
+              <li><strong>Primary Image:</strong> The first image will be set as primary (you can change this later)</li>
+            </ul>
+            <p className="text-xs text-blue-700 mt-2">
+              <strong>Note:</strong> Invalid files will be automatically rejected with an error message.
+            </p>
+          </div>
           
           <div className="space-y-4">
             {/* Image Upload Input */}
@@ -339,13 +381,13 @@ export default function CreateProperty() {
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 multiple
                 onChange={handleImageSelect}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               />
               <p className="text-xs text-gray-500 mt-1">
-                You can select multiple images at once. Supported formats: JPG, PNG, WebP
+                Select one or more images. Files larger than 5MB or unsupported formats will be rejected.
               </p>
             </div>
 
