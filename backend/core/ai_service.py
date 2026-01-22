@@ -29,7 +29,22 @@ class PropertyRecommendationService:
         if OPENAI_AVAILABLE:
             api_key = config('OPENAI_API_KEY', default=None)
             if api_key:
-                self.client = OpenAI(api_key=api_key)
+                try:
+                    # Initialize OpenAI client
+                    # Note: OpenAI 1.12.0 may have issues with proxy env vars
+                    # If initialization fails, we'll fall back to similarity-based recommendations
+                    self.client = OpenAI(api_key=api_key)
+                except (TypeError, ValueError, Exception) as e:
+                    # If there's an initialization error (e.g., proxies parameter issue),
+                    # log it and continue without AI - fallback algorithm will be used
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Failed to initialize OpenAI client: {e}. "
+                        f"AI recommendations will use fallback similarity algorithm. "
+                        f"This is not critical - the system will continue to work."
+                    )
+                    self.client = None
     
     def _is_available(self) -> bool:
         """Check if OpenAI is available and configured"""

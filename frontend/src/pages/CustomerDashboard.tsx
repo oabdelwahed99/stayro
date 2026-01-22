@@ -218,14 +218,6 @@ export default function CustomerDashboard() {
         </div>
       )}
 
-      {/* Personalized Recommendations */}
-      <div className="mb-8">
-        <PropertyRecommendations
-          title="You Might Also Like"
-          limit={6}
-        />
-      </div>
-
       {/* Filters and Sort */}
       {bookings.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -415,6 +407,14 @@ export default function CustomerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Personalized Recommendations - Appears last on the page */}
+      <div className="mt-12">
+        <PropertyRecommendations
+          title="You Might Also Like"
+          limit={6}
+        />
+      </div>
     </div>
   )
 }

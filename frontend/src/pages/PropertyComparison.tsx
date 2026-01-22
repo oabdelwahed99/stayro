@@ -26,15 +26,18 @@ export default function PropertyComparisonPage() {
   
   const [allProperties, setAllProperties] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showComparison, setShowComparison] = useState(false)
 
   useEffect(() => {
     loadProperties()
-    // If we have IDs from URL, show comparison view immediately
-    if (idsFromUrl.length > 0) {
-      setShowComparison(true)
-    }
   }, [])
+
+  // Update selectedIds when URL params change (for when user navigates with IDs in URL)
+  useEffect(() => {
+    const urlIds = searchParams.get('ids')?.split(',').map(Number).filter(Boolean) || []
+    if (urlIds.length > 0) {
+      setSelectedIds(urlIds)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     // Save selections to localStorage
@@ -107,7 +110,7 @@ export default function PropertyComparisonPage() {
   }
 
   // If IDs are in URL, show comparison view
-  if (showComparison && idsFromUrl.length > 0) {
+  if (idsFromUrl.length > 0) {
     return <PropertyComparison initialPropertyIds={idsFromUrl} />
   }
 

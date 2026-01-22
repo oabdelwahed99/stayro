@@ -30,7 +30,7 @@ export default function Login() {
             } else if (user.role === 'OWNER') {
               navigate('/owner/dashboard')
             } else if (user.role === 'CUSTOMER') {
-              navigate('/customer/dashboard')
+              navigate('/properties')
             } else {
               navigate('/')
             }

@@ -353,15 +353,6 @@ export default function PropertyDetail() {
               </div>
             </div>
           )}
-
-          {/* Recommendations */}
-          <div className="mt-6">
-            <PropertyRecommendations 
-              propertyId={property.id} 
-              title="You Might Also Like"
-              limit={6}
-            />
-          </div>
         </div>
 
         {/* Booking Sidebar */}
@@ -468,6 +459,15 @@ export default function PropertyDetail() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Recommendations - Appears last on the page */}
+      <div className="mt-12">
+        <PropertyRecommendations 
+          propertyId={property.id} 
+          title="You Might Also Like"
+          limit={6}
+        />
       </div>
     </div>
   )
