@@ -84,11 +84,8 @@ Once the containers are running, you need to set up the database:
 # Run migrations
 docker-compose exec web python manage.py migrate
 
-# Create superuser
-docker-compose exec web python manage.py createsuperuser
-
 # Load seed data (optional)
-docker-compose exec web python manage.py shell < scripts/seed_data.py
+docker-compose exec web python scripts/run_seed.py
 ```
 
 #### Managing Docker Services
