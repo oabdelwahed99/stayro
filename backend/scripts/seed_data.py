@@ -26,12 +26,16 @@ def create_users():
             'is_superuser': True,
         }
     )
+    # Always set password to admin123 (in case user already exists)
+    admin.set_password('admin123')
+    admin.is_staff = True
+    admin.is_superuser = True
+    admin.role = 'ADMIN'
+    admin.save()
     if created:
-        admin.set_password('admin123')
-        admin.save()
-        print(f"Created admin user: {admin.username}")
+        print(f"Created admin user: {admin.username} (password: admin123)")
     else:
-        print(f"Found existing admin user: {admin.username}")
+        print(f"Updated existing admin user: {admin.username} (password reset to: admin123)")
     
     # Property owners
     owners_data = [
